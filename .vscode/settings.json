@@ -1,0 +1,8 @@
+{
+  "editor.rulers": [160],
+  "files.eol": "\n",
+  "eslint.alwaysShowStatus": true,
+  "eslint.autoFixOnSave": true,
+  "editor.formatOnSave": true,
+  "prettier.eslintIntegration": true
+}

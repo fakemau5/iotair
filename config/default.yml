@@ -1,0 +1,12 @@
+iota:
+  nodeUri: https://nodes.devnet.iota.org:443
+  nodeZmqUri: tcp://zmq.devnet.iota.org:5556
+  seed: ZEFIDYB9IWLGV9JWITEMIVNHUXJWKTGRWLEDB9S9PUUHDOJFKOSKQEYESLOMMEFFVQVRBFQBQ9JFQCQFY
+  recipientAddress: CSQYGEUSLDIUANGNTGRAIBO9BWDSLKPFLCDKIRMRIEFTQJAZLZIPLORXGKRCADMVFGVMMQVDKMTLRIGK9LNRIIVPAA
+airconditioner:
+  enabled: false
+  baseUrl: http://192.168.1.21
+  tickDuration: 600000
+  tickCost: 500
+server:
+  port: 8000
