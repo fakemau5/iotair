@@ -1,12 +1,13 @@
 iota:
   nodeUri: https://nodes.devnet.iota.org:443
   nodeZmqUri: tcp://zmq.devnet.iota.org:5556
-  seed: ZEFIDYB9IWLGV9JWITEMIVNHUXJWKTGRWLEDB9S9PUUHDOJFKOSKQEYESLOMMEFFVQVRBFQBQ9JFQCQFY
-  recipientAddress: CSQYGEUSLDIUANGNTGRAIBO9BWDSLKPFLCDKIRMRIEFTQJAZLZIPLORXGKRCADMVFGVMMQVDKMTLRIGK9LNRIIVPAA
+  seed: OVMJZTDTEAGWMZMVF9QVJFU9XTVCGVQJNHDMODERIHSARNQKACZNJNUN9RWHAINOQYYAVZ9RWSMQRJGHA
 airconditioner:
-  enabled: false
+  enabled: true
   baseUrl: http://192.168.1.21
-  tickDuration: 600000
+  tickDuration: 60000
   tickCost: 500
 server:
-  port: 8000
+  port: 80
+  user: admin
+  password: pass

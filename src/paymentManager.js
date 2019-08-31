@@ -1,6 +1,6 @@
 'use strict';
 
-const {composeAPI} = require('@iota/core');
+const {composeAPI, generateAddress} = require('@iota/core');
 const config = require('config');
 const EventEmitter = require('events');
 const zmq = require('zeromq');
@@ -15,23 +15,18 @@ class PaymentManager extends EventEmitter {
         this.socket = zmq.socket('sub');
         this.socket.on('message', async (msg) => {
             console.log('Payment manager: transaction notified...');
-            this.state.address = null;
             this.emit(EVENT_PROCESSING);
-            this.walletInfo();
+            const data = msg.toString().split(' ');
+            const txs = await this.provider.getTransactionObjects([data[1]]);
+            txs.forEach((tx) => (this.state.balance += tx.value));
+            this.emit(EVENT_STATE_CHANGED);
         });
     }
 
     async walletInfo() {
-        console.log('Payment manager: getting account info...');
-        const accountData = await this.provider.getAccountData(config.iota.seed);
-        console.log(`Payment manager: balance is ${accountData.balance} i`);
-        if (this.state.balance !== accountData.balance) {
-            this.state.balance = accountData.balance;
-            this.emit(EVENT_STATE_CHANGED);
-        }
-
         console.log('Payment manager: getting new receiving address...');
-        const address = await this.provider.getNewAddress(config.iota.seed, {checksum: true});
+        // Deterministic
+        const address = generateAddress(config.iota.seed, 0, 2, true);
         console.log(`Payment manager: new address is ${address}`);
         if (this.state.address !== address) {
             this.state.address = address;
@@ -43,6 +38,7 @@ class PaymentManager extends EventEmitter {
 
     async start() {
         console.log('Starting payment manager...');
+        this.state.balance = 0;
         this.provider = await composeAPI({
             provider: config.get('iota.nodeUri'),
         });
@@ -66,31 +62,14 @@ class PaymentManager extends EventEmitter {
 
     async payTick() {
         console.log(`Payment manager: paying current tick (${config.airconditioner.tickCost} i)...`);
-        const transfers = [
-            {
-                address: config.iota.recipientAddress,
-                value: config.airconditioner.tickCost,
-                tag: 'IOTAIRTICK',
-            },
-        ];
-        const depth = 3;
-        const minWeightMagnitude = 9; // devnet
-        let payment = false;
-        try {
-            const trytes = await this.provider.prepareTransfers(config.iota.seed, transfers, {});
-            const bundle = await this.provider.sendTrytes(trytes, depth, minWeightMagnitude);
-            console.log(`Payment manager: published transaction with tail hash: ${bundle[0].hash}`);
-            await this.socket.unsubscribe(stripChecksum(this.state.address));
-            console.log(`Payment manager: unsubscribed from to ${stripChecksum(this.state.address)} updates...`);
-            this.state.address = null;
-            this.state.balance -= config.airconditioner.tickCost;
-            this.emit(EVENT_PAID);
-            payment = bundle[0].hash;
-        } catch (err) {
-            console.log('Payment manager: insufficient credit, transaction failed');
+        if (this.state.balance - config.airconditioner.tickCost < 0) {
             this.emit(EVENT_UNPAID);
+            return false;
         }
-        return payment;
+
+        this.state.balance = this.state.balance - config.airconditioner.tickCost;
+        this.emit(EVENT_PAID);
+        return true;
     }
 
     async dispose() {

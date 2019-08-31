@@ -1,15 +1,22 @@
 'use strict';
 
 const config = require('config');
-const createApi = require('./api');
-
+const createRoutes = require('./routes');
 const express = require('express');
+const basicAuth = require('express-basic-auth');
+const path = require('path');
 
 class Server {
-    constructor(state) {
+    constructor(state, physicalInterface) {
         this.app = express();
         this.app.set('port', config.get('server.port'));
-        this.app.use('/', createApi(state));
+        this.app.use(express.static(path.join(__dirname, '..', 'res')));
+        this.app.set('view engine', 'ejs');
+        this.app.set('views', path.join(__dirname, '..', 'res', 'views'));
+        const users = {};
+        users[config.get('server.user')] = config.get('server.password');
+        this.app.use(basicAuth({users, challenge: true, realm: 'I0t41r'}));
+        this.app.use('/', createRoutes(state, physicalInterface));
     }
 
     async start() {

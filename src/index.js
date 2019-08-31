@@ -19,7 +19,7 @@ const airConditionerRemoteController = new AirConditionerRemoteController(config
 const thermometer = new Thermometer(config.get('airconditioner.baseUrl'), state);
 const physicalInterface = new PhysicalInterface(state);
 const paymentManager = new PaymentManager(state);
-const webServer = new Server(state);
+const webServer = new Server(state, physicalInterface);
 
 airConditionerRemoteController.on(EVENT_STATE_CHANGED, () => physicalInterface.refreshDisplay());
 paymentManager.on(EVENT_STATE_CHANGED, () => physicalInterface.refreshDisplay());
@@ -30,10 +30,11 @@ paymentManager.on(EVENT_TICK, () => paymentManager.payTick());
 physicalInterface.on(EVENT_BTN_ONOFF_PRESSED, async () => {
     switch (state.status) {
         case STATUS_OFF:
-            await physicalInterface.splashMessage('wait.png', 'PROCESSING PAYMENT');
             if (await paymentManager.payTick()) {
                 await airConditionerRemoteController.turnOn();
                 paymentManager.startBilling();
+            } else {
+                physicalInterface.refreshDisplay();
             }
             break;
         case STATUS_ON:
@@ -44,7 +45,6 @@ physicalInterface.on(EVENT_BTN_ONOFF_PRESSED, async () => {
 });
 paymentManager.on(EVENT_PAID, async () => {
     physicalInterface.refreshDisplay();
-    paymentManager.walletInfo();
     return;
 });
 paymentManager.on(EVENT_UNPAID, async () => {

@@ -10,6 +10,21 @@ const {formatBalance} = require('./utils');
 
 const font = path.join(__dirname, '..', 'res', 'fonts', 'Roboto-Regular.ttf');
 
+function coord2offset(x, y, size) {
+    return (size + 1) * y + x + 1;
+}
+function invertColors(bitmap) {
+    const size = bitmap.size;
+    const data = bitmap.data;
+
+    for (let x = 0; x < size; x++) {
+        for (let y = 0; y < size; y++) {
+            const offset = coord2offset(x, y, size);
+            data[offset] = Math.abs(data[offset] - 255);
+        }
+    }
+}
+
 class PhysicalInterface extends EventEmitter {
     constructor(state) {
         super();
@@ -18,11 +33,10 @@ class PhysicalInterface extends EventEmitter {
         this.state = state;
 
         epd.buttons.handler.then((handler) => {
-            const self = this;
-            handler.on('pressed', function(button) {
+            handler.on('pressed', (button) => {
                 switch (button) {
                     case epd.buttons.button1:
-                        self.emit(EVENT_BTN_ONOFF_PRESSED, null);
+                        this.emit(EVENT_BTN_ONOFF_PRESSED, null);
                         break;
                 }
             });
@@ -32,6 +46,10 @@ class PhysicalInterface extends EventEmitter {
     async start() {
         console.log('Starting physical interface...');
         await this.splashMessage('logo.png');
+    }
+
+    async fireButtonEvent() {
+        this.emit(EVENT_BTN_ONOFF_PRESSED, null);
     }
 
     async splashMessage(image, text) {
@@ -59,7 +77,7 @@ class PhysicalInterface extends EventEmitter {
             if (this.splashText) {
                 // Retrieve bounding box of displayed string
                 const fontSize = 12;
-                const [xll, yll, xlr, ylr, xur, yur, xul, yul] = sb.stringFTBBox(epd.colors.black, font, fontSize, 0, 0, 0, this.splashText);
+                const [, , , , xur, , xul] = sb.stringFTBBox(epd.colors.black, font, fontSize, 0, 0, 0, this.splashText);
                 sb.stringFT(epd.colors.black, font, fontSize, 0, Math.round(this.width / 2 - (xur - xul) / 2), 150, this.splashText);
             }
             this.splashImage = null;
@@ -71,6 +89,7 @@ class PhysicalInterface extends EventEmitter {
                     type: 'png',
                     margin: 1,
                     size: 3,
+                    customize: invertColors,
                 });
                 const qrBuffer = epd.gd.createFromPngPtr(qrPng);
                 qrBuffer.copy(sb, 140, 15, 0, 0, qrBuffer.width, qrBuffer.height);
@@ -87,7 +106,7 @@ class PhysicalInterface extends EventEmitter {
             // Temp
             if (this.state.temperature !== null) {
                 sb.stringFT(epd.colors.black, font, 10, 0, 20, 110, 'room temp');
-                sb.stringFT(epd.colors.black, font, 30, 0, 20, 150, `${this.state.temperature}°`);
+                sb.stringFT(epd.colors.black, font, 30, 0, 20, 150, `${this.state.temperature}°C`);
             }
             // Balance
             if (this.state.balance !== null) {
@@ -101,15 +120,9 @@ class PhysicalInterface extends EventEmitter {
                     `${formatBalance(this.state.balance)} (${Math.floor(this.state.balance / config.airconditioner.tickCost) *
                         Math.floor(config.airconditioner.tickDuration / 60000)} min)`
                 );
-                sb.stringFT(
-                    epd.colors.black,
-                    font,
-                    10,
-                    0,
-                    140,
-                    165,
-                    `fee: ${formatBalance(config.airconditioner.tickCost)} / ${Math.floor(config.airconditioner.tickDuration / 60000)} min`
-                );
+                const tickMinutes = Math.floor(config.airconditioner.tickDuration / 60000);
+                const tickIntervalLabel = tickMinutes > 1 ? `${tickMinutes} min` : 'min';
+                sb.stringFT(epd.colors.black, font, 10, 0, 140, 165, `fee: ${formatBalance(config.airconditioner.tickCost)} / ${tickIntervalLabel}`);
             }
         }
 

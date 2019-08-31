@@ -13,12 +13,17 @@ class Thermometer extends EventEmitter {
 
     async measure() {
         console.log('Thermometer: measuring...');
-        const res = await axios.get(`${this.baseUrl}/aircon/get_sensor_info`);
         let temperature;
-        const matchHtemp = res.data.match(/htemp=(\d+[,.]{1}\d*)/);
-        if (matchHtemp) {
-            temperature = parseFloat(matchHtemp[1]);
+        try {
+            const res = await axios.get(`${this.baseUrl}/aircon/get_sensor_info`);
+            const matchHtemp = res.data.match(/htemp=(\d+[,.]{1}\d*)/);
+            if (matchHtemp) {
+                temperature = parseFloat(matchHtemp[1]);
+            }
+        } catch (err) {
+            temperature = -273;
         }
+
         console.log(`Thermometer: ${temperature}`);
         if (this.state.temperature !== temperature) {
             this.state.temperature = temperature;

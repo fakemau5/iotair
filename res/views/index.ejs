@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
+      integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"
+      rel="stylesheet"
+      integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <section id="contact">
+      <div class="container">
+        <div class="text-center">
+          <img src="/images/logo2.png" alt="IOTAIR" />
+        </div>
+        <div class="row">
+          <div class="col-sm-12 col-md-6 col-lg-3 my-5">
+            <div class="card border-0">
+              <div class="card-body text-center">
+                <h2 class="text-uppercase mb-5"><%= status %></h2>
+                <form action="/ac/toggle" method="post">
+                  <%if (status == 'ON') { %>
+                  <input
+                    type="submit"
+                    name="toggle"
+                    value="Turn OFF"
+                    class="btn btn-primary btn-lg"
+                  />
+                  <% } %> <%if (status == 'OFF') { %>
+                  <input
+                    type="submit"
+                    name="toggle"
+                    value="Turn ON"
+                    class="btn btn-primary btn-lg"
+                  />
+                  <% } %>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-12 col-md-6 col-lg-3 my-5">
+            <div class="card border-0">
+              <div class="card-body text-center">
+                <h2 class="text-uppercase mb-5"><%= temperature %> °C</h2>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-12 col-md-6 col-lg-3 my-5">
+            <div class="card border-0">
+              <div class="card-body text-center">
+                <h4 class="text-uppercase mb-5">Credit</h4>
+                <p><%= balance %> iota</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-12 col-md-6 col-lg-3 my-5">
+            <div class="card border-0">
+              <div class="card-body text-center">
+                <h4 class="text-uppercase mb-5">Top up credits</h4>
+                <p><%= address %></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
