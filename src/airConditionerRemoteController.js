@@ -15,7 +15,9 @@ class AirConditionerRemoteController extends EventEmitter {
     async turnOn() {
         console.log('Remote contoller: turning on air conditioner...');
         if (config.airconditioner.enabled) {
-            await axios.post(`${this.baseUrl}/aircon/set_control_info?pow=1&mode=2&stemp=26&shum=0&f_rate=A&f_dir=0`);
+            // Sets the air conditioner in automatic mode, to gain a 25°C room temperature
+            // see: https://github.com/ael-code/daikin-control for other APIs ad settings
+            await axios.post(`${this.baseUrl}/aircon/set_control_info?pow=1&mode=7&stemp=25&shum=0&f_rate=A&f_dir=0`);
         }
         console.log('Remote contoller: air conditioner turned on');
         this.state.status = STATUS_ON;

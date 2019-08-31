@@ -15,12 +15,14 @@ class Thermometer extends EventEmitter {
         console.log('Thermometer: measuring...');
         let temperature;
         try {
+            // Get temperature data from the air conditioner unit
             const res = await axios.get(`${this.baseUrl}/aircon/get_sensor_info`);
             const matchHtemp = res.data.match(/htemp=(\d+[,.]{1}\d*)/);
             if (matchHtemp) {
                 temperature = parseFloat(matchHtemp[1]);
             }
         } catch (err) {
+            // Fake temperature value if request fails, or for development purposes
             temperature = -273;
         }
 
@@ -34,6 +36,7 @@ class Thermometer extends EventEmitter {
     async start() {
         console.log('Thermometer: starting...');
         this.measure();
+        // Measure temperature every THERMOMETER_MEASURE_INTERVAL milliseconds
         this.dataInterval = setInterval(() => {
             this.measure();
         }, THERMOMETER_MEASURE_INTERVAL);

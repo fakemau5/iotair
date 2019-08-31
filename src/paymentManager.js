@@ -6,6 +6,7 @@ const EventEmitter = require('events');
 const zmq = require('zeromq');
 const {EVENT_STATE_CHANGED, EVENT_PROCESSING, EVENT_TICK, EVENT_UNPAID, EVENT_PAID} = require('./constants');
 
+// Function to remove the checksum from a 90-char IOTA address
 const stripChecksum = (addr) => addr.substr(0, 81);
 
 class PaymentManager extends EventEmitter {
@@ -14,6 +15,7 @@ class PaymentManager extends EventEmitter {
         this.state = state;
         this.socket = zmq.socket('sub');
         this.socket.on('message', async (msg) => {
+            // Update the balance upon receiving one or more transactions towards the unit address
             console.log('Payment manager: transaction notified...');
             this.emit(EVENT_PROCESSING);
             const data = msg.toString().split(' ');
@@ -21,19 +23,6 @@ class PaymentManager extends EventEmitter {
             txs.forEach((tx) => (this.state.balance += tx.value));
             this.emit(EVENT_STATE_CHANGED);
         });
-    }
-
-    async walletInfo() {
-        console.log('Payment manager: getting new receiving address...');
-        // Deterministic
-        const address = generateAddress(config.iota.seed, 0, 2, true);
-        console.log(`Payment manager: new address is ${address}`);
-        if (this.state.address !== address) {
-            this.state.address = address;
-            this.emit(EVENT_STATE_CHANGED);
-            await this.socket.subscribe(stripChecksum(this.state.address));
-            console.log(`Payment manager: subscribed to ${stripChecksum(this.state.address)} updates...`);
-        }
     }
 
     async start() {
@@ -44,6 +33,22 @@ class PaymentManager extends EventEmitter {
         });
         await this.socket.connect(config.iota.nodeZmqUri);
         await this.walletInfo();
+    }
+
+    async walletInfo() {
+        console.log('Payment manager: getting new receiving address...');
+        // Deterministic address generation to improve performances. When the total
+        // balance of that address will be transferred this address can be changed or
+        // just configure a different seed for the unit (it will be impossible to
+        // send money to an address with an outgoing transaction).
+        const address = generateAddress(config.iota.seed, 0, 2, true);
+        console.log(`Payment manager: address is ${address}`);
+        if (this.state.address !== address) {
+            this.state.address = address;
+            this.emit(EVENT_STATE_CHANGED);
+            await this.socket.subscribe(stripChecksum(this.state.address));
+            console.log(`Payment manager: subscribed to ${stripChecksum(this.state.address)} updates...`);
+        }
     }
 
     startBilling() {
@@ -66,7 +71,6 @@ class PaymentManager extends EventEmitter {
             this.emit(EVENT_UNPAID);
             return false;
         }
-
         this.state.balance = this.state.balance - config.airconditioner.tickCost;
         this.emit(EVENT_PAID);
         return true;

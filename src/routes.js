@@ -15,6 +15,7 @@ module.exports = (state, physicalInterface) => {
         res.render('index.ejs', state);
     });
 
+    // Act as if pressing the physical button
     router.post('/ac/toggle', async (req, res) => {
         physicalInterface.fireButtonEvent();
         await sleep(5000);

@@ -2,6 +2,7 @@
 
 const {convertUnits} = require('@iota/unit-converter');
 
+// Formats the iota balance label
 module.exports.formatBalance = (balance) => {
     let toUnit;
     if (balance >= 1000000000000000) {

@@ -6,10 +6,10 @@ const EVENT_PROCESSING = 'PROCESSING';
 const EVENT_TICK = 'TICK';
 const EVENT_PAID = 'PAID';
 const EVENT_UNPAID = 'UNPAID';
-
 const STATUS_ON = 'ON';
 const STATUS_OFF = 'OFF';
 
+// Interval to poll for the room temperature, in milliseconds
 const THERMOMETER_MEASURE_INTERVAL = 60000;
 
 module.exports = {

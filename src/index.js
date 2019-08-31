@@ -8,6 +8,7 @@ const PhysicalInterface = require('./physicalInterface');
 const PaymentManager = require('./paymentManager');
 const Server = require('./server');
 
+// Empty initial state
 const state = {
     status: null,
     temperature: null,
@@ -15,16 +16,17 @@ const state = {
     address: null,
 };
 
+// Load the application modules
 const airConditionerRemoteController = new AirConditionerRemoteController(config.get('airconditioner.baseUrl'), state);
 const thermometer = new Thermometer(config.get('airconditioner.baseUrl'), state);
 const physicalInterface = new PhysicalInterface(state);
 const paymentManager = new PaymentManager(state);
 const webServer = new Server(state, physicalInterface);
 
+// Modules interaction on triggered events
 airConditionerRemoteController.on(EVENT_STATE_CHANGED, () => physicalInterface.refreshDisplay());
 paymentManager.on(EVENT_STATE_CHANGED, () => physicalInterface.refreshDisplay());
 thermometer.on(EVENT_STATE_CHANGED, () => physicalInterface.refreshDisplay());
-
 paymentManager.on(EVENT_PROCESSING, () => physicalInterface.splashMessage('wait.png', 'PROCESSING PAYMENT'));
 paymentManager.on(EVENT_TICK, () => paymentManager.payTick());
 physicalInterface.on(EVENT_BTN_ONOFF_PRESSED, async () => {
@@ -54,6 +56,7 @@ paymentManager.on(EVENT_UNPAID, async () => {
     return;
 });
 
+// Initialize the modules
 physicalInterface.start();
 setTimeout(() => {
     airConditionerRemoteController.turnOff();

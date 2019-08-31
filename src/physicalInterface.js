@@ -10,6 +10,7 @@ const {formatBalance} = require('./utils');
 
 const font = path.join(__dirname, '..', 'res', 'fonts', 'Roboto-Regular.ttf');
 
+// Utils functions to invert colors of the QR to fix rendering on e-ink
 function coord2offset(x, y, size) {
     return (size + 1) * y + x + 1;
 }
@@ -32,6 +33,7 @@ class PhysicalInterface extends EventEmitter {
         this.height = epd.width;
         this.state = state;
 
+        // Emit an event when button is pressed
         epd.buttons.handler.then((handler) => {
             handler.on('pressed', (button) => {
                 switch (button) {
@@ -48,19 +50,24 @@ class PhysicalInterface extends EventEmitter {
         await this.splashMessage('logo.png');
     }
 
+    // Fire the button pressed event programmatically (when using the web interface)
     async fireButtonEvent() {
         this.emit(EVENT_BTN_ONOFF_PRESSED, null);
     }
 
+    // Display a fullscreen image with an optional message
     async splashMessage(image, text) {
         this.splashImage = image;
         this.splashText = text;
         await this.refreshDisplay();
     }
 
+    // Update display information
     async refreshDisplay() {
         console.log('Physical interface: display refreshing...');
         if (this.displayUpdating) {
+            // Display refreshing is slow and two or more refresh instructions may collide.
+            // This ensure always a proper rendering
             this.forceDisplayRefresh = true;
             return;
         }
@@ -69,6 +76,7 @@ class PhysicalInterface extends EventEmitter {
         const sb = await epd.getImageBuffer('landscape');
         sb.filledRectangle(0, 0, this.width, this.height, epd.colors.white);
 
+        // Render spash image and message
         if (this.splashImage || this.splashText) {
             if (this.splashImage) {
                 const imgBuffer = await epd.gd.createFromPng(path.join(__dirname, '..', 'res', 'images', this.splashImage));
@@ -83,7 +91,8 @@ class PhysicalInterface extends EventEmitter {
             this.splashImage = null;
             this.splashText = null;
         } else {
-            // QR
+            // Render display information
+            // QR with deposit address
             if (this.state.address !== null) {
                 const qrPng = qr.imageSync(this.state.address, {
                     type: 'png',
@@ -128,6 +137,7 @@ class PhysicalInterface extends EventEmitter {
 
         await epd.displayImageBuffer(sb);
         await epd.sleep();
+
         this.displayUpdating = false;
         if (this.forceDisplayRefresh) {
             this.forceDisplayRefresh = false;
